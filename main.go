@@ -97,10 +97,10 @@ func main() {
 		for s, path := range size {
 			date := time.Now().AddDate(0, 0, -int(time.Now().Weekday())+1)
 			if time.Now().Weekday() == time.Sunday {
-				date = date.AddDate(0, 0, -6)
+				date = time.Now().AddDate(0, 0, -6)
 			}
 
-			formattedDate := date.Format("2006-01-02")
+			formattedDate := date.Format("060102")
 			if len(name) < 2 {
 				name = fmt.Sprintf("0%s", name)
 			}
