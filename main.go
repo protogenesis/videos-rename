@@ -30,11 +30,17 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
+func stop() {
+	fmt.Println("Press 'Enter' to exit...")
+	fmt.Scanln()
+	os.Exit(1)
+}
+
 func main() {
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Error getting current directory:", err)
-		return
+		stop()
 	}
 
 	var dir, output string
@@ -45,7 +51,7 @@ func main() {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			fmt.Println("Error reading home directory:", err)
-			return
+			stop()
 		}
 		dir = filepath.Join(homeDir, "Desktop", "workspace", "magic", "temp")
 		output = filepath.Join(homeDir, "Desktop", "workspace", "magic", "magic-output")
@@ -55,23 +61,27 @@ func main() {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Println("Error reading directory:", err)
-		return
+		stop()
 	}
 
 	// Ask for user input for the date
 	var inputDate string
+	var date time.Time
 	fmt.Println("Enter the date (YYYY-MM-DD):")
 	if _, err := fmt.Scanln(&inputDate); err != nil {
-		fmt.Println("Error reading input:", err)
-		return
+		date = time.Now().AddDate(0, 0, -int(time.Now().Weekday())+1)
+		if time.Now().Weekday() == time.Sunday {
+			date = time.Now().AddDate(0, 0, -6)
+		}
+	} else {
+		// Parse the input date
+		date, err = time.Parse("2006-01-02", inputDate)
+		if err != nil {
+			fmt.Println("Error parsing date:", err)
+			stop()
+		}
 	}
 
-	// Parse the input date
-	date, err := time.Parse("2006-01-02", inputDate)
-	if err != nil {
-		fmt.Println("Error parsing date:", err)
-		return
-	}
 	formattedDate := date.Format("060102")
 
 	f := make(map[string]map[string]string)
@@ -79,7 +89,7 @@ func main() {
 		filename := file.Name()
 		size := filename[0:1]
 		extension := filepath.Ext(filename)
-		name := strings.TrimSuffix(filename[1:], extension)
+		name := strings.TrimSuffix(filename[2:], extension)
 
 		if _, ok := f[name]; !ok {
 			f[name] = make(map[string]string)
@@ -89,11 +99,11 @@ func main() {
 
 	if err := os.RemoveAll(output); err != nil {
 		fmt.Println("Error removing output directory:", err)
-		return
+		stop()
 	}
 	if err := os.Mkdir(output, os.ModePerm); err != nil {
 		fmt.Println("Error creating output directory:", err)
-		return
+		stop()
 	}
 
 	for name, sizes := range f {
@@ -104,7 +114,7 @@ func main() {
 			fileName := filepath.Join(output, fmt.Sprintf("%s自制-vid%s-%s.mp4", formattedDate, name, s))
 			if err := copyFile(path, fileName); err != nil {
 				fmt.Println("Error copying file:", err)
-				return
+				stop()
 			}
 		}
 	}
